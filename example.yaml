@@ -28,9 +28,6 @@ external_components:
       url: https://github.com/dennisvo/esphome_toshiba_suzumi
     components: [toshiba_suzumi]
 
-logger:
-  level: info
-
 uart:
   id: uart_bus
   tx_pin: 33

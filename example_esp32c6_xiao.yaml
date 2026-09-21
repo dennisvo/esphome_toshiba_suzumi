@@ -58,17 +58,15 @@ esp32:
 
 logger:
   hardware_uart: USB_SERIAL_JTAG
-  level: VERBOSE
+  level: INFO
   baud_rate: 115200
+  # Bump toshiba_suzumi to DEBUG or VERBOSE while troubleshooting the UART link.
   logs:
     wifi: WARN
     api: WARN
-    ota: INFO
     sensor: WARN
-    binary_sensor: INFO
-    climate: INFO
     uart: WARN
-    toshiba_suzumi: VERBOSE
+    toshiba_suzumi: DEBUG
 
 api:
   reboot_timeout: 0s
