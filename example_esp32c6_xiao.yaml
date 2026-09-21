@@ -1,7 +1,7 @@
 # Toshiba AC ESPHome configuration
 #
 # This setup uses the external Toshiba Suzumi ESPHome component:
-# https://github.com/pedobry/esphome_toshiba_suzumi
+# https://github.com/dennisvo/esphome_toshiba_suzumi
 #
 # Target board:
 # Seeed Studio XIAO ESP32-C6
@@ -174,7 +174,7 @@ status_led:
 external_components:
   - source:
       type: git
-      url: https://github.com/pedobry/esphome_toshiba_suzumi
+      url: https://github.com/dennisvo/esphome_toshiba_suzumi
     components:
       - toshiba_suzumi
 

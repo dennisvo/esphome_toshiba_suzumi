@@ -86,7 +86,7 @@ Minimal snippet:
 external_components:
   - source:
       type: git
-      url: https://github.com/pedobry/esphome_toshiba_suzumi
+      url: https://github.com/dennisvo/esphome_toshiba_suzumi
     components: [toshiba_suzumi]
 
 uart:
@@ -124,7 +124,7 @@ wifi:
     password: !secret ap_password
 ```
 
-See the [Secrets](#secrets) section below for what to put in `secrets.yaml`. Update the `external_components` `url:` to point at whichever fork you install from once we publish the new repo.
+See the [Secrets](#secrets) section below for what to put in `secrets.yaml`.
 
 The component compiles into the ESPHome build directly from GitHub — nothing to install manually.
 
