@@ -59,13 +59,15 @@ esp32:
 logger:
   hardware_uart: USB_SERIAL_JTAG
   level: DEBUG
-  baud_rate: 115200
   # Global `level` is a compile-time ceiling; per-tag entries above it are dropped.
   # For the deepest driver traces, set `level: VERBOSE` and `toshiba_suzumi: VERBOSE`.
   logs:
     wifi: WARN
     api: WARN
+    ota: INFO
     sensor: WARN
+    binary_sensor: INFO
+    climate: INFO
     uart: WARN
     toshiba_suzumi: DEBUG
 
