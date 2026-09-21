@@ -15,7 +15,8 @@
 #
 # Required secrets (secrets.yaml):
 # - wifi_ssid / wifi_password: Wi-Fi credentials
-# - api_encryption_key:        32-byte base64 key for Home Assistant API encryption
+# - device_encryption_key:     32-byte base64 key. Secures the Home Assistant API
+#                              connection and, via `ota.encryption:`, the OTA session.
 # - ap_password:               password for the fallback captive-portal hotspot
 
 esphome:
@@ -75,7 +76,7 @@ api:
   reboot_timeout: 0s
 
   encryption:
-    key: !secret api_encryption_key
+    key: !secret device_encryption_key
 
   on_client_connected:
     then:

@@ -109,7 +109,7 @@ climate:
 # Encrypted Home Assistant API
 api:
   encryption:
-    key: !secret api_encryption_key
+    key: !secret device_encryption_key
 
 # Encrypted OTA updates (no shared password needed)
 ota:
@@ -138,7 +138,7 @@ Both example YAMLs enable API encryption and encrypted OTA by default and refere
 |-----|-------------------|
 | `wifi_ssid` | Your Wi-Fi SSID |
 | `wifi_password` | Your Wi-Fi password |
-| `api_encryption_key` | 32-byte base64 key for Home Assistant API encryption. Generate one with `esphome config-value api.encryption.key` or via the ESPHome dashboard's key generator. |
+| `device_encryption_key` | 32-byte base64 key. Secures the Home Assistant API connection and, via `ota.encryption:`, the OTA session. Generate one with `esphome config-value api.encryption.key` or via the ESPHome dashboard's key generator. |
 | `ap_password` | Password for the fallback captive-portal hotspot the device exposes if it cannot join Wi-Fi. |
 
 With `ota.encryption:` enabled (as in both examples) no separate OTA password is required — the OTA session key is negotiated over the encrypted API connection. If you prefer a shared OTA password instead, replace the `encryption:` block with `password: !secret ota_password` and add `ota_password` to `secrets.yaml`.
