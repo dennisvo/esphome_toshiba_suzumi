@@ -455,12 +455,12 @@ sensor:
   - platform: wifi_signal
     name: "Toshiba AC Wi-Fi Signal"
     id: wifi_rssi
-    update_interval: 5s
+    update_interval: 60s
 
   - platform: uptime
     name: "Toshiba AC Uptime"
     id: esp_uptime
-    update_interval: 10s
+    update_interval: 60s
 
 text_sensor:
   - platform: template
