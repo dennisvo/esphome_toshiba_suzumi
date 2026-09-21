@@ -1,3 +1,19 @@
+# Toshiba AC ESPHome configuration - generic ESP32 example.
+#
+# This is the reference configuration: a minimal ESP32 setup that shows the
+# core Toshiba component config plus every optional feature as a commented-out
+# line. Copy this file, pick the options you want, and uncomment them.
+#
+# Target board:
+# Generic ESP32 dev board (nodemcu-32s), Arduino framework.
+#
+# See example_esp32c6_xiao.yaml for a Seeed XIAO ESP32-C6 build with ESP-IDF.
+#
+# Required secrets (secrets.yaml):
+# - wifi_ssid / wifi_password: Wi-Fi credentials
+# - api_encryption_key:        32-byte base64 key for Home Assistant API encryption
+# - ap_password:               password for the fallback captive-portal hotspot
+
 esphome:
   name: "climate-living-room"
 
@@ -65,13 +81,16 @@ button:
             auto* controller = static_cast<toshiba_suzumi::ToshibaClimateUart*>(id(living_room));
             controller->scan();
 
-# Enable Home Assistant API
+# Enable encrypted Home Assistant API.
 api:
   encryption:
-    key: !secret ha_enc_key
+    key: !secret api_encryption_key
 
+# Encrypted OTA updates. No shared password required - the OTA session key
+# is negotiated over the encrypted API connection.
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    encryption:
 
 wifi:
   ssid: !secret wifi_ssid
@@ -79,5 +98,5 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "A Fallback Hotspot"
-    password: "xxxxxxxxxxx"
+    ssid: "Toshiba-AC-Fallback"
+    password: !secret ap_password

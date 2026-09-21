@@ -94,33 +94,33 @@ enum class ToshibaCommandType : uint8_t {
   ODU_STATUS = 0xE5,   // 229 - Outdoor unit status (unsolicited)
 };
 
-const MODE ClimateModeToInt(climate::ClimateMode mode);
-const climate::ClimateMode IntToClimateMode(MODE mode);
+MODE ClimateModeToInt(climate::ClimateMode mode);
+climate::ClimateMode IntToClimateMode(MODE mode);
 
-const SWING ClimateSwingModeToInt(climate::ClimateSwingMode mode);
-const climate::ClimateSwingMode IntToClimateSwingMode(SWING mode);
+SWING ClimateSwingModeToInt(climate::ClimateSwingMode mode);
+climate::ClimateSwingMode IntToClimateSwingMode(SWING mode);
 
-const optional<FAN> ClimateFanModeToInt(climate::ClimateFanMode mode);
+optional<FAN> ClimateFanModeToInt(climate::ClimateFanMode mode);
 
 const LogString *climate_state_to_string(STATE mode);
 
-const optional<FAN> StringToFanLevel(const char* mode);
+optional<FAN> StringToFanLevel(const std::string &mode);
 const char* IntToCustomFanMode(FAN mode);
 
-const optional<PWR_LEVEL> StringToPwrLevel(const std::string &mode);
-const std::string IntToPowerLevel(PWR_LEVEL mode);
+optional<PWR_LEVEL> StringToPwrLevel(const std::string &mode);
+std::string IntToPowerLevel(PWR_LEVEL mode);
 
-const optional<SWING> StringToVerticalAirDirection(const std::string &position);
+optional<SWING> StringToVerticalAirDirection(const std::string &position);
 const char* SwingToVerticalAirDirection(SWING mode);
 bool IsFixedVerticalAirDirection(SWING mode);
 
-const optional<SPECIAL_MODE> PresetToSpecialMode(const char* preset);
+optional<SPECIAL_MODE> PresetToSpecialMode(const char* preset);
 const char* SpecialModeToPreset(SPECIAL_MODE mode);
 
-const optional<climate::ClimatePreset> StringToClimatePreset(const char *preset);
+optional<climate::ClimatePreset> StringToClimatePreset(const char *preset);
 const char* ClimatePresetToString(climate::ClimatePreset preset);
-const optional<SPECIAL_MODE> ClimatePresetToSpecialMode(climate::ClimatePreset preset);
-const optional<climate::ClimatePreset> SpecialModeToClimatePreset(SPECIAL_MODE mode);
+optional<SPECIAL_MODE> ClimatePresetToSpecialMode(climate::ClimatePreset preset);
+optional<climate::ClimatePreset> SpecialModeToClimatePreset(SPECIAL_MODE mode);
 
 }  // namespace toshiba_suzumi
 }  // namespace esphome

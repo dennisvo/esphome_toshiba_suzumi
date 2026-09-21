@@ -12,12 +12,25 @@ using namespace esphome::climate;
 
 static const int RECEIVE_TIMEOUT = 200;
 static const int COMMAND_DELAY = 100;
+// Longest valid frame is the daily-energy response (~70 bytes); anything larger
+// is guaranteed garbage and must not be allowed to grow rx_message_ unbounded.
+static const size_t MAX_RX_MESSAGE_LEN = 128;
+
+static const std::vector<uint8_t> HANDSHAKE[6] = {
+    {2, 255, 255, 0, 0, 0, 0, 2},       {2, 255, 255, 1, 0, 0, 1, 2, 254}, {2, 0, 0, 0, 0, 0, 2, 2, 2, 250},
+    {2, 0, 1, 129, 1, 0, 2, 0, 0, 123}, {2, 0, 1, 2, 0, 0, 2, 0, 0, 254},  {2, 0, 2, 0, 0, 0, 0, 254},
+};
+
+static const std::vector<uint8_t> AFTER_HANDSHAKE[2] = {
+    {2, 0, 2, 1, 0, 0, 2, 0, 0, 251},
+    {2, 0, 2, 2, 0, 0, 2, 0, 0, 250},
+};
 
 /**
  * Checksum is calculated from all bytes excluding start byte.
  * It's (256 - (sum % 256)).
  */
-uint8_t checksum(std::vector<uint8_t> data, uint8_t length) {
+uint8_t checksum(const std::vector<uint8_t> &data, size_t length) {
   uint8_t sum = 0;
   for (size_t i = 1; i < length; i++) {
     sum += data[i];
@@ -38,7 +51,7 @@ ToshibaClimateUart::ToshibaClimateUart() {
 /**
  * Send the command to UART interface.
  */
-void ToshibaClimateUart::send_to_uart(ToshibaCommand command) {
+void ToshibaClimateUart::send_to_uart(const ToshibaCommand &command) {
   this->last_command_timestamp_ = millis();
   ESP_LOGV(TAG, "Sending: [%s]", format_hex_pretty(command.payload).c_str());
   this->write_array(command.payload);
@@ -66,7 +79,7 @@ void ToshibaClimateUart::start_handshake() {
  * are ended via RECIEVE timeout.
  */
 bool ToshibaClimateUart::validate_message_() {
-  uint8_t at = this->rx_message_.size() - 1;
+  size_t at = this->rx_message_.size() - 1;
   auto *data = &this->rx_message_[0];
   uint8_t new_byte = data[at];
 
@@ -93,7 +106,7 @@ bool ToshibaClimateUart::validate_message_() {
   }
 
   // Byte 7: LENGTH
-  uint8_t length = 6 + data[6] + 1;  // prefix + data + checksum
+  size_t length = 6 + data[6] + 1;  // prefix + data + checksum
 
   // wait until all data is read
   if (at < length)
@@ -127,7 +140,7 @@ void ToshibaClimateUart::sendCmd(ToshibaCommandType cmd, uint8_t value) {
   payload.push_back(static_cast<uint8_t>(cmd));
   payload.push_back(value);
   payload.push_back(checksum(payload, payload.size()));
-  ESP_LOGD(TAG, "Sending ToshibaCommand: %d, value: %d, checksum: %d", cmd, value, payload[14]);
+  ESP_LOGD(TAG, "Sending ToshibaCommand: %d, value: %d, checksum: %d", static_cast<int>(cmd), value, payload.back());
   this->enqueue_command_(ToshibaCommand{.cmd = cmd, .payload = std::vector<uint8_t>{payload}});
 }
 
@@ -191,6 +204,7 @@ void ToshibaClimateUart::configure_supported_custom_modes_() {
 }
 
 void ToshibaClimateUart::setup() {
+  this->rx_message_.reserve(MAX_RX_MESSAGE_LEN);
   this->configure_supported_custom_modes_();
   // establish communication
   this->start_handshake();
@@ -237,6 +251,13 @@ void ToshibaClimateUart::process_command_queue_() {
  * Handle received byte from UART
  */
 void ToshibaClimateUart::handle_rx_byte_(uint8_t c) {
+  if (this->rx_message_.size() >= MAX_RX_MESSAGE_LEN) {
+    // Line noise on a floating RX pin can push bytes indefinitely without ever
+    // completing a valid frame; drop the buffer instead of letting it grow.
+    ESP_LOGW(TAG, "RX buffer reached %u bytes without a valid frame; discarding.",
+             static_cast<unsigned>(this->rx_message_.size()));
+    this->rx_message_.clear();
+  }
   this->rx_message_.push_back(c);
   if (!validate_message_()) {
     this->rx_message_.clear();
@@ -362,14 +383,14 @@ void ToshibaClimateUart::parseResponse(std::vector<uint8_t> rawData) {
         this->swing_mode = climate::CLIMATE_SWING_OFF;
       } else {
         auto swingMode = IntToClimateSwingMode(swing);
-        ESP_LOGI(TAG, "Received swing mode: %s", climate_swing_mode_to_string(swingMode));
+        ESP_LOGI(TAG, "Received swing mode: %s", LOG_STR_ARG(climate_swing_mode_to_string(swingMode)));
         this->swing_mode = swingMode;
       }
       break;
     }
     case ToshibaCommandType::MODE: {
       auto mode = IntToClimateMode(static_cast<MODE>(value));
-      ESP_LOGI(TAG, "Received AC mode: %s", climate_mode_to_string(mode));
+      ESP_LOGI(TAG, "Received AC mode: %s", LOG_STR_ARG(climate_mode_to_string(mode)));
       if (this->power_state_ == STATE::ON && !this->self_clean_running_) {
         this->mode = mode;
       }
@@ -402,7 +423,7 @@ void ToshibaClimateUart::parseResponse(std::vector<uint8_t> rawData) {
     }
     case ToshibaCommandType::POWER_STATE: {
       auto climateState = static_cast<STATE>(value);
-      ESP_LOGI(TAG, "Received AC unit power state: %s", climate_state_to_string(climateState));
+      ESP_LOGI(TAG, "Received AC unit power state: %s", LOG_STR_ARG(climate_state_to_string(climateState)));
       if (climateState == STATE::OFF) {
         // AC unit was just powered off, set mode to OFF
         this->mode = climate::CLIMATE_MODE_OFF;
@@ -527,7 +548,7 @@ void ToshibaClimateUart::parseResponse(std::vector<uint8_t> rawData) {
       break;
     }
     default:
-      ESP_LOGW(TAG, "Unknown sensor: %d with value %d", sensor, value);
+      ESP_LOGW(TAG, "Unknown sensor: %d with value %d", static_cast<int>(sensor), value);
       break;
   }
   this->rx_message_.clear();  // message processed, clear buffer
@@ -581,7 +602,7 @@ void ToshibaClimateUart::dump_config() {
   }
   if (!supported_presets_.empty()) {
     ESP_LOGCONFIG(TAG, "Supported presets:");
-    for (const char* &preset : supported_presets_) {
+    for (const char *preset : supported_presets_) {
       ESP_LOGCONFIG(TAG, "  - %s", preset);
     }
   }
@@ -620,7 +641,7 @@ void ToshibaClimateUart::update() {
 void ToshibaClimateUart::control(const climate::ClimateCall &call) {
   if (call.get_mode().has_value()) {
     ClimateMode mode = *call.get_mode();
-    ESP_LOGD(TAG, "Setting mode to %s", climate_mode_to_string(mode));
+    ESP_LOGD(TAG, "Setting mode to %s", LOG_STR_ARG(climate_mode_to_string(mode)));
     if (mode != CLIMATE_MODE_OFF) {
       this->set_self_clean_running_(false);
     }
@@ -673,7 +694,7 @@ void ToshibaClimateUart::control(const climate::ClimateCall &call) {
 
   if (call.get_fan_mode().has_value()) {
     auto fan_mode = *call.get_fan_mode();
-    ESP_LOGD(TAG, "Setting fan mode to %s", climate_fan_mode_to_string(fan_mode));
+    ESP_LOGD(TAG, "Setting fan mode to %s", LOG_STR_ARG(climate_fan_mode_to_string(fan_mode)));
     this->set_fan_mode_(fan_mode);
     auto fan_value = ClimateFanModeToInt(fan_mode);
     if (fan_value.has_value()) {
@@ -683,7 +704,7 @@ void ToshibaClimateUart::control(const climate::ClimateCall &call) {
 
   if (call.has_custom_fan_mode()) {
     auto fan_mode = call.get_custom_fan_mode();
-    auto payload = StringToFanLevel(fan_mode.c_str());
+    auto payload = StringToFanLevel(fan_mode);
     if (payload.has_value()) {
       ESP_LOGD(TAG, "Setting fan mode to custom: %s", fan_mode.c_str());
       this->set_custom_fan_mode_(fan_mode);
@@ -694,7 +715,7 @@ void ToshibaClimateUart::control(const climate::ClimateCall &call) {
   if (call.get_swing_mode().has_value()) {
     auto swing_mode = *call.get_swing_mode();
     auto function_value = ClimateSwingModeToInt(swing_mode);
-    ESP_LOGD(TAG, "Setting swing mode to %s", climate_swing_mode_to_string(swing_mode));
+    ESP_LOGD(TAG, "Setting swing mode to %s", LOG_STR_ARG(climate_swing_mode_to_string(swing_mode)));
     this->swing_mode = swing_mode;
     this->sendCmd(ToshibaCommandType::SWING, static_cast<uint8_t>(function_value));
     this->publish_vertical_air_direction_(function_value);

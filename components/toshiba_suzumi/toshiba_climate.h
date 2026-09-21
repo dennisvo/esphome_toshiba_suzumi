@@ -25,16 +25,6 @@ static const uint8_t SPECIAL_MODE_EIGHT_DEG_MAX_TEMP = 13;
 static const uint8_t SPECIAL_MODE_EIGHT_DEG_DEF_TEMP = 8;
 static const uint8_t NORMAL_MODE_DEF_TEMP = 20;
 
-static const std::vector<uint8_t> HANDSHAKE[6] = {
-    {2, 255, 255, 0, 0, 0, 0, 2},       {2, 255, 255, 1, 0, 0, 1, 2, 254}, {2, 0, 0, 0, 0, 0, 2, 2, 2, 250},
-    {2, 0, 1, 129, 1, 0, 2, 0, 0, 123}, {2, 0, 1, 2, 0, 0, 2, 0, 0, 254},  {2, 0, 2, 0, 0, 0, 0, 254},
-};
-
-static const std::vector<uint8_t> AFTER_HANDSHAKE[2] = {
-    {2, 0, 2, 1, 0, 0, 2, 0, 0, 251},
-    {2, 0, 2, 2, 0, 0, 2, 0, 0, 250},
-};
-
 struct ToshibaCommand {
   ToshibaCommandType cmd;
   std::vector<uint8_t> payload;
@@ -124,7 +114,7 @@ class ToshibaClimateUart : public PollingComponent, public climate::Climate, pub
   uint32_t time_sync_interval_{86400000};
 
   void enqueue_command_(const ToshibaCommand &command);
-  void send_to_uart(const ToshibaCommand command);
+  void send_to_uart(const ToshibaCommand &command);
   void start_handshake();
   void parseResponse(std::vector<uint8_t> rawData);
   void requestData(ToshibaCommandType cmd);

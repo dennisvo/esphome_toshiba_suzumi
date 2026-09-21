@@ -1,43 +1,24 @@
-***
-Sep 10th 2025
-
-* implement Special modes as Climate presets instead of HA selector. Due to backward compatibility, the list of special modes can be either as new "supported_presets" YAML option, or the old "supported_modes" option. I recommend to migrate to the new config schema as the old one will be removed in the future.
-
-***
-Jun 23rd 2025
-
-* updated schema definition to support ESPHome 2025.5+. 
+Fork changelog - dennisvo/esphome_toshiba_suzumi
+Upstream: https://github.com/pedobry/esphome_toshiba_suzumi
+For upstream history prior to the fork, see:
+https://github.com/pedobry/esphome_toshiba_suzumi/blob/main/CHANGELOG.txt
 
 ***
-May 18th 2025
+2026-09-22 - Initial fork
 
-* added support for FrostGuard (8 degree) mode
-* removed deprecated conf functions (fix for ESPHome 2025.11.0)
-* replace CUSTOM_FAN_1, CUSTOM_FAN_3, CUSTOM_FAN_3 with regular fan modes FAN_LOW, FAN_MEDIUM and FAN_HIGH
-* added special modes "Sleep", "Floor" and "Comfort"
-
-Oct 7th 2024
-
-* add configuration option to disable WiFi LED on AC unit
-
-April 4th, 2023
-
-* fixed fan Quiet mode for ESPHome 2023.3.0
-* Note:
-    - users with ESPHome 2023.3.0+ should use branch master
-        url: https://github.com/pedobry/esphome_toshiba_suzumi
-    - users with ESPHome 2023.2.x and older should use this url:
-        url: https://github.com/pedobry/esphome_toshiba_suzumi@2023.2.0
-
-APRIL 1st, 2023
-
-* updated examples to filter outside temp value 127
-* added an optional button to scan for unsupported sensors
-* tested on ESP8266 - Lolin D1 mini
-
-
-ORIGINAL RELEASE (Dec 2022)
-
-* initial release
-
-***
+* Target ESPHome 2026.9+ on ESP32 (Seeed XIAO ESP32-C6 as reference hardware).
+  Dropped ESP8266 support from docs and examples.
+* Fixed StringToFanLevel: was comparing raw pointers, so Home Assistant custom
+  fan modes (Low-Medium, Medium-High) were silently ignored.
+* Hardened UART RX buffer: reserved up-front and capped at 128 bytes with
+  warn-and-discard on overflow. Fixes std::bad_alloc crash observed on
+  ESP32-C6 with a floating RX pin / no UART peer connected.
+* Const-correctness and const-ref parameters on hot paths (send_to_uart,
+  checksum); moved static handshake tables from the header to the .cpp.
+* GCC 14 / ESPHome 2026.9 warning cleanup: dropped meaningless top-level
+  const on return-by-value signatures, added explicit int casts for enum
+  %d format specifiers, wrapped LogString values with LOG_STR_ARG().
+* Example YAMLs enable Home Assistant API encryption and encrypted OTA by
+  default; both examples share a common set of secrets.yaml keys.
+* Added example_esp32c6_xiao.yaml - full Seeed XIAO ESP32-C6 build.
+* No wire-protocol bytes changed.

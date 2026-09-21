@@ -6,7 +6,7 @@
 namespace esphome {
 namespace toshiba_suzumi {
 
-const MODE ClimateModeToInt(climate::ClimateMode mode) {
+MODE ClimateModeToInt(climate::ClimateMode mode) {
   switch (mode) {
     case climate::CLIMATE_MODE_HEAT_COOL:
       return MODE::HEAT_COOL;
@@ -24,7 +24,7 @@ const MODE ClimateModeToInt(climate::ClimateMode mode) {
   }
 }
 
-const climate::ClimateMode IntToClimateMode(MODE mode) {
+climate::ClimateMode IntToClimateMode(MODE mode) {
   switch (mode) {
     case MODE::HEAT_COOL:
       return climate::CLIMATE_MODE_HEAT_COOL;
@@ -47,14 +47,13 @@ const climate::ClimateMode IntToClimateMode(MODE mode) {
  * @param mode The custom fan mode string to convert
  * @return The Toshiba fan mode code
  */
-const optional<FAN> StringToFanLevel(const char* mode) {
-  if (mode == CUSTOM_FAN_LEVEL_2) {
+optional<FAN> StringToFanLevel(const std::string &mode) {
+  if (str_equals_case_insensitive(mode, CUSTOM_FAN_LEVEL_2)) {
     return FAN::FANMODE_2;
-  } else if (mode == CUSTOM_FAN_LEVEL_4) {
+  } else if (str_equals_case_insensitive(mode, CUSTOM_FAN_LEVEL_4)) {
     return FAN::FANMODE_4;
-  } else {
-    return nullopt;
   }
+  return nullopt;
 }
 
 /**
@@ -73,7 +72,7 @@ const char* IntToCustomFanMode(FAN mode) {
   }
 }
 
-const optional<PWR_LEVEL> StringToPwrLevel(const std::string &mode) {
+optional<PWR_LEVEL> StringToPwrLevel(const std::string &mode) {
   if (str_equals_case_insensitive(mode, CUSTOM_PWR_LEVEL_100)) {
     return PWR_LEVEL::PCT_100;
   } else if (str_equals_case_insensitive(mode, CUSTOM_PWR_LEVEL_75)) {
@@ -85,7 +84,7 @@ const optional<PWR_LEVEL> StringToPwrLevel(const std::string &mode) {
   }
 }
 
-const std::string IntToPowerLevel(PWR_LEVEL mode) {
+std::string IntToPowerLevel(PWR_LEVEL mode) {
   switch (mode) {
     case PWR_LEVEL::PCT_100:
       return CUSTOM_PWR_LEVEL_100;
@@ -115,7 +114,7 @@ static const VerticalAirDirection VERTICAL_AIR_DIRECTIONS[] = {
     {SWING::VERTICAL_FIX_POSITION_5, "Bottom"},
 };
 
-const optional<SWING> StringToVerticalAirDirection(const std::string &position) {
+optional<SWING> StringToVerticalAirDirection(const std::string &position) {
   for (auto const &direction : VERTICAL_AIR_DIRECTIONS) {
     if (str_equals_case_insensitive(position, direction.name)) {
       return direction.swing;
@@ -145,7 +144,7 @@ bool IsFixedVerticalAirDirection(SWING mode) {
          value <= static_cast<uint8_t>(SWING::VERTICAL_FIX_POSITION_5);
 }
 
-const SWING ClimateSwingModeToInt(climate::ClimateSwingMode mode) {
+SWING ClimateSwingModeToInt(climate::ClimateSwingMode mode) {
   switch (mode) {
     case climate::CLIMATE_SWING_OFF:
       return SWING::OFF;
@@ -156,12 +155,12 @@ const SWING ClimateSwingModeToInt(climate::ClimateSwingMode mode) {
     case climate::CLIMATE_SWING_HORIZONTAL:
       return SWING::HORIZONTAL;
     default:
-      ESP_LOGE(TAG, "Invalid swing mode %d.", mode);
+      ESP_LOGE(TAG, "Invalid swing mode %d.", static_cast<int>(mode));
       return SWING::OFF;
   }
 }
 
-const climate::ClimateSwingMode IntToClimateSwingMode(SWING mode) {
+climate::ClimateSwingMode IntToClimateSwingMode(SWING mode) {
   switch (mode) {
     case SWING::OFF:
       return climate::CLIMATE_SWING_OFF;
@@ -172,7 +171,7 @@ const climate::ClimateSwingMode IntToClimateSwingMode(SWING mode) {
     case SWING::BOTH:
       return climate::CLIMATE_SWING_BOTH;
     default:
-      ESP_LOGE(TAG, "Invalid swing mode %d.", mode);
+      ESP_LOGE(TAG, "Invalid swing mode %d.", static_cast<int>(mode));
       return climate::CLIMATE_SWING_OFF;
   }
 }
@@ -182,7 +181,7 @@ const climate::ClimateSwingMode IntToClimateSwingMode(SWING mode) {
  * @param mode The climate fan mode to convert
  * @return The Toshiba fan mode
  */
-const optional<FAN> ClimateFanModeToInt(climate::ClimateFanMode mode) {
+optional<FAN> ClimateFanModeToInt(climate::ClimateFanMode mode) {
   switch (mode) {
     case climate::CLIMATE_FAN_AUTO:
       return FAN::FAN_AUTO;
@@ -210,7 +209,7 @@ const LogString *climate_state_to_string(STATE mode) {
   }
 }
 
-const optional<SPECIAL_MODE> PresetToSpecialMode(const char* preset) {
+optional<SPECIAL_MODE> PresetToSpecialMode(const char* preset) {
   if (str_equals_case_insensitive(preset, SPECIAL_MODE_STANDARD)) {
     return SPECIAL_MODE::STANDARD;
   } else if (str_equals_case_insensitive(preset, SPECIAL_MODE_HI_POWER)) {
@@ -272,7 +271,7 @@ const char* SpecialModeToPreset(SPECIAL_MODE mode) {
  * Return nullopt if the preset is not supported by the climate component
  * and we need to use a custom preset.
  */
-const optional<climate::ClimatePreset> StringToClimatePreset(const char *preset) {
+optional<climate::ClimatePreset> StringToClimatePreset(const char *preset) {
   if (str_equals_case_insensitive(preset, SPECIAL_MODE_STANDARD)) {
     return climate::CLIMATE_PRESET_NONE;
   } else if (str_equals_case_insensitive(preset, SPECIAL_MODE_ECO)) {
@@ -304,12 +303,12 @@ const char* ClimatePresetToString(climate::ClimatePreset preset) {
   }
 }
 
-const optional<SPECIAL_MODE> ClimatePresetToSpecialMode(climate::ClimatePreset preset) {
+optional<SPECIAL_MODE> ClimatePresetToSpecialMode(climate::ClimatePreset preset) {
   auto preset_string = ClimatePresetToString(preset);
   return PresetToSpecialMode(preset_string);
 }
 
-const optional<climate::ClimatePreset> SpecialModeToClimatePreset(SPECIAL_MODE mode) {
+optional<climate::ClimatePreset> SpecialModeToClimatePreset(SPECIAL_MODE mode) {
   switch (mode) {
     case SPECIAL_MODE::STANDARD:
       return climate::CLIMATE_PRESET_NONE;
